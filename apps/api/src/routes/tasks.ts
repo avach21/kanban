@@ -3,10 +3,10 @@ import type { TaskStatus } from "@kanban/types";
 import { and, desc, eq } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { requireAuth, type AppVariables } from "../auth";
+import { fetchRandomDogImageUrl } from "../services/dog-api";
 
 const db = createDb();
 const VALID_STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
-const DEFAULT_DOG_IMAGE_URL = "about:blank";
 
 type CreateTaskInput = {
   title: string;
@@ -174,13 +174,21 @@ taskRoutes.post("/", async (c) => {
       return c.json({ error: parsed.message }, 400);
     }
 
+    let dogImageUrl: string;
+    try {
+      dogImageUrl = await fetchRandomDogImageUrl();
+    } catch (error) {
+      console.error("dog api fetch failed", error);
+      return c.json({ error: "Failed to fetch dog image." }, 502);
+    }
+
     const [createdTask] = await db
       .insert(tasks)
       .values({
         title: parsed.value.title,
         description: parsed.value.description,
         status: parsed.value.status,
-        dogImageUrl: DEFAULT_DOG_IMAGE_URL,
+        dogImageUrl,
         userId,
         updatedAt: new Date(),
       })
