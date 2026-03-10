@@ -1,0 +1,19 @@
+{
+  "name": "@kanban/db",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "latest",
+    "postgres": "latest"
+  },
+  "devDependencies": {
+    "drizzle-kit": "latest",
+    "typescript": "latest"
+  }
+}
