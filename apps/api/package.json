@@ -11,6 +11,8 @@
   "dependencies": {
     "@kanban/db": "workspace:*",
     "@kanban/types": "workspace:*",
+    "better-auth": "latest",
+    "drizzle-orm": "latest",
     "hono": "latest"
   },
   "devDependencies": {
