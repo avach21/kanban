@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AppVariables, sessionMiddleware } from "./auth";
 import { authRoutes } from "./routes/auth";
+import { taskRoutes } from "./routes/tasks";
 
 const app = new Hono<{ Variables: AppVariables }>();
 
@@ -22,6 +23,7 @@ app.get("/health", (c) => {
 });
 
 app.route("/auth", authRoutes);
+app.route("/tasks", taskRoutes);
 
 const port = Number(process.env.API_PORT ?? 3001);
 
