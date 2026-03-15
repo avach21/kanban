@@ -5,8 +5,16 @@ import { Hono, type Context } from "hono";
 import { requireAuth, type AppVariables } from "../auth";
 import { fetchRandomDogImageUrl } from "../services/dog-api";
 
-const db = createDb();
 const VALID_STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
+
+let dbClient: ReturnType<typeof createDb> | null = null;
+
+function getDb() {
+  if (!dbClient) {
+    dbClient = createDb();
+  }
+  return dbClient;
+}
 
 type CreateTaskInput = {
   title: string;
@@ -136,6 +144,8 @@ taskRoutes.get("/", async (c) => {
   }
 
   try {
+    const db = getDb();
+
     const userTasks = await db
       .select({
         id: tasks.id,
@@ -164,6 +174,8 @@ taskRoutes.post("/", async (c) => {
   }
 
   try {
+    const db = getDb();
+
     const body = await parseJsonBody(c);
     if (!body.ok) {
       return c.json({ error: body.message }, 400);
@@ -225,6 +237,8 @@ taskRoutes.patch("/:id", async (c) => {
   }
 
   try {
+    const db = getDb();
+
     const body = await parseJsonBody(c);
     if (!body.ok) {
       return c.json({ error: body.message }, 400);
@@ -275,6 +289,8 @@ taskRoutes.delete("/:id", async (c) => {
   }
 
   try {
+    const db = getDb();
+
     const [deletedTask] = await db
       .delete(tasks)
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))

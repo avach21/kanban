@@ -4,6 +4,7 @@ import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
 
 const SESSION_COOKIE_NAME = "kanban_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+const DEV_FALLBACK_SECRET = "kanban_dev_secret_at_least_32_characters";
 
 export type AppVariables = {
   userId: string | null;
@@ -12,11 +13,19 @@ export type AppVariables = {
 type AppContext = Context<{ Variables: AppVariables }>;
 
 function getAuthSecret() {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret || secret.length < 32) {
+  const secret = process.env.BETTER_AUTH_SECRET?.trim();
+  if (secret && secret.length >= 32) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
     throw new Error("BETTER_AUTH_SECRET must be set and at least 32 characters.");
   }
-  return secret;
+
+  console.warn(
+    "BETTER_AUTH_SECRET is missing or too short. Using development fallback secret.",
+  );
+  return DEV_FALLBACK_SECRET;
 }
 
 const auth = betterAuth({

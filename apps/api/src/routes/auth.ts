@@ -9,12 +9,41 @@ import {
   verifyPassword,
 } from "../auth";
 
-const db = createDb();
+let dbClient: ReturnType<typeof createDb> | null = null;
+
+function getDb() {
+  if (!dbClient) {
+    dbClient = createDb();
+  }
+  return dbClient;
+}
 
 type Credentials = {
   email: string;
   password: string;
 };
+
+function getAuthRouteErrorMessage(error: unknown, fallbackMessage: string) {
+  if (!(error instanceof Error)) {
+    return fallbackMessage;
+  }
+
+  const message = error.message;
+
+  if (message.includes("DATABASE_URL is required")) {
+    return "Database is not configured. Set DATABASE_URL in .env and restart the API.";
+  }
+
+  if (message.includes("ECONNREFUSED") || message.includes("Connection terminated")) {
+    return "Cannot connect to PostgreSQL. Start the database and retry.";
+  }
+
+  if (message.includes('relation "users" does not exist')) {
+    return "Database schema is missing. Run migrations and retry.";
+  }
+
+  return fallbackMessage;
+}
 
 function parseCredentials(input: unknown):
   | { ok: true; value: Credentials }
@@ -59,6 +88,8 @@ async function parseCredentialsFromRequest(c: Context<{ Variables: AppVariables 
 
 authRoutes.post("/signup", async (c) => {
   try {
+    const db = getDb();
+
     const parsed = await parseCredentialsFromRequest(c);
     if (!parsed.ok) {
       return c.json({ error: parsed.message }, parsed.status);
@@ -98,12 +129,14 @@ authRoutes.post("/signup", async (c) => {
     return c.json({ user: createdUser }, 201);
   } catch (error) {
     console.error("auth signup failed", error);
-    return c.json({ error: "Failed to create account." }, 500);
+    return c.json({ error: getAuthRouteErrorMessage(error, "Failed to create account.") }, 500);
   }
 });
 
 authRoutes.post("/login", async (c) => {
   try {
+    const db = getDb();
+
     const parsed = await parseCredentialsFromRequest(c);
     if (!parsed.ok) {
       return c.json({ error: parsed.message }, parsed.status);
@@ -140,7 +173,7 @@ authRoutes.post("/login", async (c) => {
     });
   } catch (error) {
     console.error("auth login failed", error);
-    return c.json({ error: "Failed to login." }, 500);
+    return c.json({ error: getAuthRouteErrorMessage(error, "Failed to login.") }, 500);
   }
 });
 

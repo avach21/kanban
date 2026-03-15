@@ -8,11 +8,14 @@
   ],
   "scripts": {
     "dev": "bun run dev:web & bun run dev:api",
-    "dev:web": "bun --cwd apps/web run dev",
-    "dev:api": "bun --cwd apps/api run dev",
+    "dev:web": "cd apps/web && bun run dev",
+    "dev:api": "cd apps/api && bun run dev",
     "build": "bun run build:web && bun run build:api",
-    "build:web": "bun --cwd apps/web run build",
-    "build:api": "bun --cwd apps/api run build",
-    "typecheck": "bun run --filter '*' typecheck"
+    "build:web": "cd apps/web && bun run build",
+    "build:api": "cd apps/api && bun run build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "db:generate": "cd packages/db && bunx drizzle-kit generate",
+    "db:migrate": "cd packages/db && bunx drizzle-kit migrate",
+    "db:push": "cd packages/db && bunx drizzle-kit push"
   }
 }
