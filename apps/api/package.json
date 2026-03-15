@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "bun --hot src/index.ts",
     "start": "bun src/index.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -17,6 +20,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "typescript": "latest"
+    "@vitest/coverage-v8": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
   }
 }

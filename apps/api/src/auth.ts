@@ -19,7 +19,9 @@ function getAuthSecret() {
   }
 
   if (process.env.NODE_ENV === "production") {
-    throw new Error("BETTER_AUTH_SECRET must be set and at least 32 characters.");
+    throw new Error(
+      "BETTER_AUTH_SECRET must be set and at least 32 characters.",
+    );
   }
 
   console.warn(
@@ -44,7 +46,10 @@ export async function hashPassword(password: string) {
 
 export async function verifyPassword(password: string, passwordHash: string) {
   const passwordContext = await getPasswordContext();
-  return passwordContext.verify(password, passwordHash);
+  return passwordContext.verify({
+    password,
+    hash: passwordHash,
+  });
 }
 
 export async function setAuthSession(c: AppContext, userId: string) {
@@ -68,7 +73,11 @@ export async function clearAuthSession(c: AppContext) {
 }
 
 async function readAuthSession(c: AppContext) {
-  const rawSession = await getSignedCookie(c, getAuthSecret(), SESSION_COOKIE_NAME);
+  const rawSession = await getSignedCookie(
+    c,
+    getAuthSecret(),
+    SESSION_COOKIE_NAME,
+  );
   if (typeof rawSession !== "string") {
     return null;
   }
@@ -84,16 +93,17 @@ async function readAuthSession(c: AppContext) {
   return { userId };
 }
 
-export const sessionMiddleware: MiddlewareHandler<{ Variables: AppVariables }> = async (
-  c,
-  next,
-) => {
+export const sessionMiddleware: MiddlewareHandler<{
+  Variables: AppVariables;
+}> = async (c, next) => {
   const session = await readAuthSession(c);
   c.set("userId", session?.userId ?? null);
   await next();
 };
 
-export const requireAuth: MiddlewareHandler<{ Variables: AppVariables }> = async (c, next) => {
+export const requireAuth: MiddlewareHandler<{
+  Variables: AppVariables;
+}> = async (c, next) => {
   if (!c.get("userId")) {
     return c.json({ error: "Unauthorized" }, 401);
   }
