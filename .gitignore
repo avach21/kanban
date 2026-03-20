@@ -12,3 +12,7 @@ coverage
 
 # Bun
 .bun
+
+# Playwright
+playwright-report
+test-results

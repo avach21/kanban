@@ -33,7 +33,7 @@ export function CreateTaskForm({ onTaskCreated, onError }: CreateTaskFormProps) 
   }
 
   return (
-    <section className="create-task-card">
+    <section className="create-task-card" data-testid="create-task-form">
       <h2>Create task</h2>
       <form className="stack" onSubmit={handleCreateTask}>
         <label className="stack">
@@ -43,6 +43,7 @@ export function CreateTaskForm({ onTaskCreated, onError }: CreateTaskFormProps) 
             value={createTitle}
             onChange={(event) => setCreateTitle(event.target.value)}
             required
+            data-testid="create-task-title-input"
           />
         </label>
 
@@ -52,10 +53,11 @@ export function CreateTaskForm({ onTaskCreated, onError }: CreateTaskFormProps) 
             value={createDescription}
             onChange={(event) => setCreateDescription(event.target.value)}
             rows={3}
+            data-testid="create-task-description-input"
           />
         </label>
 
-        <button type="submit" disabled={isCreatingTask}>
+        <button type="submit" disabled={isCreatingTask} data-testid="create-task-submit-button">
           {isCreatingTask ? "Creating..." : "Create task"}
         </button>
       </form>

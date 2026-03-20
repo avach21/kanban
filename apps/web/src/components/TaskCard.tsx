@@ -75,6 +75,7 @@ export function TaskCard({
     <section
       className={`task-card ${isDragging ? "dragging" : ""}`}
       data-task-id={task.id}
+      data-testid="task-card"
     >
       <img
         className="task-image"
@@ -89,11 +90,13 @@ export function TaskCard({
             type="text"
             value={editTitle}
             onChange={(event) => setEditTitle(event.target.value)}
+            data-testid="task-edit-title-input"
           />
           <textarea
             rows={3}
             value={editDescription}
             onChange={(event) => setEditDescription(event.target.value)}
+            data-testid="task-edit-description-input"
           />
         </div>
       ) : (
@@ -112,15 +115,21 @@ export function TaskCard({
               type="button"
               onClick={handleSaveEdit}
               disabled={isSavingTask}
+              data-testid="task-save-button"
             >
               {isSavingTask ? "Saving..." : "Save"}
             </button>
-            <button type="button" onClick={handleCancelEdit} disabled={isSavingTask}>
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              disabled={isSavingTask}
+              data-testid="task-cancel-button"
+            >
               Cancel
             </button>
           </>
         ) : (
-          <button type="button" onClick={handleStartEdit}>
+          <button type="button" onClick={handleStartEdit} data-testid="task-edit-button">
             Edit
           </button>
         )}
@@ -129,6 +138,7 @@ export function TaskCard({
           type="button"
           onClick={handleDeleteTask}
           disabled={isDeleting || isSavingTask}
+          data-testid="task-delete-button"
         >
           {isDeleting ? "Deleting..." : "Delete"}
         </button>

@@ -29,7 +29,12 @@ export function SortableTaskCard(props: SortableTaskCardProps) {
 
   return (
     <div ref={setNodeRef} style={style}>
-      <div {...attributes} {...listeners} className="drag-handle">
+      <div
+        {...attributes}
+        {...listeners}
+        className="drag-handle"
+        data-testid="task-drag-handle"
+      >
         <TaskCard {...props} isDragging={isDragging} />
       </div>
     </div>

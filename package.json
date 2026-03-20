@@ -16,6 +16,14 @@
     "typecheck": "bun run --filter '*' typecheck",
     "db:generate": "cd packages/db && bunx drizzle-kit generate",
     "db:migrate": "cd packages/db && bunx drizzle-kit migrate",
-    "db:push": "cd packages/db && bunx drizzle-kit push"
+    "db:push": "cd packages/db && bunx drizzle-kit push",
+    "e2e:install": "playwright install chromium",
+    "e2e:setup": "cd packages/db && export DATABASE_URL=\"postgres://postgres:postgres@localhost:5432/kanban_test\" && bun scripts/ensure-e2e-db.ts && bun run migrate",
+    "e2e": "bun run e2e:setup && playwright test",
+    "e2e:headed": "bun run e2e:setup && playwright test --headed",
+    "e2e:ui": "bun run e2e:setup && playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

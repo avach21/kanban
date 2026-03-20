@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { ApiError, getErrorMessage, login, signup, type Task } from "../api";
+import { getErrorMessage, login, signup, type Task } from "../api";
 
 type AuthMode = "login" | "signup";
 
@@ -41,14 +41,15 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-testid="auth-screen">
       <h1>Kanban MVP</h1>
-      <section className="auth-card">
+      <section className="auth-card" data-testid="auth-card">
         <div className="auth-tabs">
           <button
             type="button"
             className={authMode === "login" ? "active-tab" : ""}
             onClick={() => setAuthMode("login")}
+            data-testid="auth-tab-login"
           >
             Log In
           </button>
@@ -56,12 +57,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             type="button"
             className={authMode === "signup" ? "active-tab" : ""}
             onClick={() => setAuthMode("signup")}
+            data-testid="auth-tab-signup"
           >
             Sign Up
           </button>
         </div>
 
-        <form className="stack" onSubmit={handleAuthSubmit}>
+        <form className="stack" onSubmit={handleAuthSubmit} data-testid="auth-form">
           <label className="stack">
             <span>Email</span>
             <input
@@ -69,6 +71,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
+              data-testid="auth-email-input"
             />
           </label>
 
@@ -80,12 +83,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               onChange={(event) => setPassword(event.target.value)}
               minLength={8}
               required
+              data-testid="auth-password-input"
             />
           </label>
 
           {authError ? <p className="error-banner">{authError}</p> : null}
 
-          <button type="submit" disabled={isSubmittingAuth}>
+          <button type="submit" disabled={isSubmittingAuth} data-testid="auth-submit-button">
             {isSubmittingAuth
               ? "Submitting..."
               : authMode === "signup"

@@ -157,7 +157,7 @@ export function TaskBoard({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <section className="board-grid">
+      <section className="board-grid" data-testid="task-board">
         {STATUS_COLUMNS.map((column) => (
           <TaskColumn
             key={column.status}

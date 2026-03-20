@@ -33,6 +33,7 @@ export function TaskColumn({
     <article
       ref={setNodeRef}
       className={`column ${isOver ? "drag-over" : ""}`}
+      data-testid={`task-column-${status}`}
     >
       <h2>{label}</h2>
       <p className="column-count">{tasks.length} tasks</p>

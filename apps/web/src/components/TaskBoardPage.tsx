@@ -81,10 +81,15 @@ export function TaskBoardPage({ onLogout }: TaskBoardPageProps) {
   }
 
   return (
-    <main className="app-shell wide">
+    <main className="app-shell wide" data-testid="task-board-page">
       <header className="app-header">
         <h1>Kanban MVP</h1>
-        <button type="button" onClick={handleLogout} disabled={isLoggingOut}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          data-testid="logout-button"
+        >
           {isLoggingOut ? "Logging out..." : "Log out"}
         </button>
       </header>
