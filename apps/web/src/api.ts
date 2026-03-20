@@ -17,6 +17,7 @@ export type Task = {
   title: string;
   description: string | null;
   status: TaskStatus;
+  position: number;
   dogImageUrl: string;
   createdAt: string;
   updatedAt: string;
@@ -94,7 +95,7 @@ export async function getTasks() {
 export async function createTask(payload: {
   title: string;
   description: string | null;
-  status: TaskStatus;
+  status?: TaskStatus;
 }) {
   return request<TaskResponse>("/tasks", {
     method: "POST",
@@ -112,6 +113,13 @@ export async function updateTask(
 ) {
   return request<TaskResponse>(`/tasks/${taskId}`, {
     method: "PATCH",
+    body: payload,
+  });
+}
+
+export async function moveTask(taskId: string, payload: { toStatus: TaskStatus; toIndex: number }) {
+  return request<TasksResponse>(`/tasks/${taskId}/move`, {
+    method: "POST",
     body: payload,
   });
 }

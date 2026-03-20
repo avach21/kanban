@@ -1,4 +1,4 @@
-import { index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const taskStatusEnum = pgEnum("task_status", ["todo", "in_progress", "done"]);
 
@@ -16,6 +16,7 @@ export const tasks = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     status: taskStatusEnum("status").default("todo").notNull(),
+    position: integer("position").notNull(),
     dogImageUrl: text("dog_image_url").notNull(),
     userId: uuid("user_id")
       .notNull()
@@ -25,5 +26,10 @@ export const tasks = pgTable(
   },
   (table) => ({
     userIdIdx: index("tasks_user_id_idx").on(table.userId),
+    statusPositionIdx: index("tasks_user_status_position_idx").on(
+      table.userId,
+      table.status,
+      table.position,
+    ),
   }),
 );

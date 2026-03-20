@@ -1,13 +1,18 @@
 import { Hono, type Context } from "hono";
+import type { TaskStatus } from "@kanban/types";
 import { requireAuth, type AppVariables } from "../auth";
 import {
   createTask,
   deleteTask,
   getTasks,
+  moveTask,
   parseCreateTask,
   parseUpdateTask,
   updateTask,
+  type MoveTaskInput,
 } from "../services/task-service";
+
+const VALID_STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
 
 async function parseJsonBody(c: Context<{ Variables: AppVariables }>) {
   try {
@@ -19,6 +24,43 @@ async function parseJsonBody(c: Context<{ Variables: AppVariables }>) {
       message: "Request body must be valid JSON.",
     };
   }
+}
+
+function parseMoveTask(
+  input: unknown,
+): { ok: true; value: MoveTaskInput } | { ok: false; message: string } {
+  if (!input || typeof input !== "object") {
+    return { ok: false, message: "Request body must be a JSON object." };
+  }
+
+  const body = input as Record<string, unknown>;
+  const toStatusRaw = body.toStatus;
+  const toIndexRaw = body.toIndex;
+
+  if (
+    typeof toStatusRaw !== "string" ||
+    !VALID_STATUSES.includes(toStatusRaw as TaskStatus)
+  ) {
+    return {
+      ok: false,
+      message: "toStatus must be todo, in_progress, or done.",
+    };
+  }
+
+  if (typeof toIndexRaw !== "number" || toIndexRaw < 0) {
+    return {
+      ok: false,
+      message: "toIndex must be a non-negative integer.",
+    };
+  }
+
+  return {
+    ok: true,
+    value: {
+      toStatus: toStatusRaw as TaskStatus,
+      toIndex: Math.floor(toIndexRaw),
+    },
+  };
 }
 
 export const taskRoutes = new Hono<{ Variables: AppVariables }>();
@@ -67,6 +109,41 @@ taskRoutes.post("/", async (c) => {
   } catch (error) {
     console.error("task create failed", error);
     return c.json({ error: "Failed to create task." }, 500);
+  }
+});
+
+taskRoutes.post("/:id/move", async (c) => {
+  const userId = c.get("userId");
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const taskId = c.req.param("id");
+  if (!taskId) {
+    return c.json({ error: "Task id is required." }, 400);
+  }
+
+  try {
+    const body = await parseJsonBody(c);
+    if (!body.ok) {
+      return c.json({ error: body.message }, 400);
+    }
+
+    const parsed = parseMoveTask(body.value);
+    if (!parsed.ok) {
+      return c.json({ error: parsed.message }, 400);
+    }
+
+    const updatedTasks = await moveTask(userId, taskId, parsed.value);
+
+    if (!updatedTasks) {
+      return c.json({ error: "Task not found." }, 404);
+    }
+
+    return c.json({ tasks: updatedTasks });
+  } catch (error) {
+    console.error("task move failed", error);
+    return c.json({ error: "Failed to move task." }, 500);
   }
 });
 

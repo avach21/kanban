@@ -1,6 +1,6 @@
 import { createDb, tasks } from "@kanban/db";
 import type { TaskStatus } from "@kanban/types";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, gt, max } from "drizzle-orm";
 import { fetchRandomDogImageUrl } from "./dog-api";
 
 const VALID_STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
@@ -139,18 +139,27 @@ export async function getTasks(userId: string) {
       title: tasks.title,
       description: tasks.description,
       status: tasks.status,
+      position: tasks.position,
       dogImageUrl: tasks.dogImageUrl,
       createdAt: tasks.createdAt,
       updatedAt: tasks.updatedAt,
     })
     .from(tasks)
     .where(eq(tasks.userId, userId))
-    .orderBy(desc(tasks.createdAt));
+    .orderBy(asc(tasks.status), asc(tasks.position));
 }
 
 export async function createTask(userId: string, input: CreateTaskInput) {
   const db = getDb();
   const dogImageUrl = await fetchRandomDogImageUrl();
+
+  // Get the max position for this user/status to assign the next position
+  const [maxPositionResult] = await db
+    .select({ maxPosition: max(tasks.position) })
+    .from(tasks)
+    .where(and(eq(tasks.userId, userId), eq(tasks.status, input.status)));
+
+  const nextPosition = (maxPositionResult?.maxPosition ?? -1) + 1;
 
   const [createdTask] = await db
     .insert(tasks)
@@ -158,6 +167,7 @@ export async function createTask(userId: string, input: CreateTaskInput) {
       title: input.title,
       description: input.description,
       status: input.status,
+      position: nextPosition,
       dogImageUrl,
       userId,
       updatedAt: new Date(),
@@ -167,6 +177,7 @@ export async function createTask(userId: string, input: CreateTaskInput) {
       title: tasks.title,
       description: tasks.description,
       status: tasks.status,
+      position: tasks.position,
       dogImageUrl: tasks.dogImageUrl,
       createdAt: tasks.createdAt,
       updatedAt: tasks.updatedAt,
@@ -194,12 +205,129 @@ export async function updateTask(
       title: tasks.title,
       description: tasks.description,
       status: tasks.status,
+      position: tasks.position,
       dogImageUrl: tasks.dogImageUrl,
       createdAt: tasks.createdAt,
       updatedAt: tasks.updatedAt,
     });
 
   return updatedTask;
+}
+
+export type MoveTaskInput = {
+  toStatus: TaskStatus;
+  toIndex: number;
+};
+
+export async function moveTask(
+  userId: string,
+  taskId: string,
+  input: MoveTaskInput,
+) {
+  const db = getDb();
+
+  // Get the current task
+  const [currentTask] = await db
+    .select({
+      id: tasks.id,
+      status: tasks.status,
+      position: tasks.position,
+    })
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+
+  if (!currentTask) {
+    return undefined;
+  }
+
+  const { toStatus, toIndex } = input;
+  const isSameColumn = currentTask.status === toStatus;
+
+  if (isSameColumn) {
+    // Same-column reorder: shift positions
+    const currentPos = currentTask.position;
+    const targetPos = toIndex;
+
+    if (currentPos === targetPos) {
+      // No change needed
+      return await getTasks(userId);
+    }
+
+    // Get all tasks in this column ordered by position
+    const columnTasks = await db
+      .select({ id: tasks.id, position: tasks.position })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), eq(tasks.status, toStatus)))
+      .orderBy(asc(tasks.position));
+
+    // Remove the moving task from the list
+    const tasksWithoutMoving = columnTasks.filter((t) => t.id !== taskId);
+    // Insert it at the target position
+    const reordered = [
+      ...tasksWithoutMoving.slice(0, toIndex),
+      { id: taskId, position: targetPos },
+      ...tasksWithoutMoving.slice(toIndex),
+    ];
+
+    // Update positions sequentially (dense reordering)
+    for (let i = 0; i < reordered.length; i++) {
+      await db
+        .update(tasks)
+        .set({ position: i, updatedAt: new Date() })
+        .where(eq(tasks.id, reordered[i].id));
+    }
+  } else {
+    // Cross-column move: shift source column, insert into target column
+    // First, shift positions in source column (remove gap)
+    const sourceTasks = await db
+      .select({ id: tasks.id, position: tasks.position })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.status, currentTask.status),
+          gt(tasks.position, currentTask.position),
+        ),
+      )
+      .orderBy(asc(tasks.position));
+
+    // Decrement positions in source column
+    for (const task of sourceTasks) {
+      await db
+        .update(tasks)
+        .set({ position: task.position - 1, updatedAt: new Date() })
+        .where(eq(tasks.id, task.id));
+    }
+
+    // Get target column tasks
+    const targetTasks = await db
+      .select({ id: tasks.id, position: tasks.position })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), eq(tasks.status, toStatus)))
+      .orderBy(asc(tasks.position));
+
+    // Shift target column to make room
+    const tasksToShift = targetTasks.filter((t) => t.position >= toIndex);
+    for (const task of tasksToShift) {
+      await db
+        .update(tasks)
+        .set({ position: task.position + 1, updatedAt: new Date() })
+        .where(eq(tasks.id, task.id));
+    }
+
+    // Move the task to target column and position
+    await db
+      .update(tasks)
+      .set({
+        status: toStatus,
+        position: toIndex,
+        updatedAt: new Date(),
+      })
+      .where(eq(tasks.id, taskId));
+  }
+
+  // Return all tasks in their new order
+  return await getTasks(userId);
 }
 
 export async function deleteTask(userId: string, taskId: string) {
