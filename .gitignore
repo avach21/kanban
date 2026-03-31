@@ -4,9 +4,12 @@ node_modules
 # build outputs
 dist
 coverage
+*.tsbuildinfo
 
 # environment files
 .env
+.env.docker
+.env.docker.local
 .env.local
 .env.*.local
 
