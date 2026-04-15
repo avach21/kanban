@@ -26,10 +26,12 @@ app.route("/auth", authRoutes);
 app.route("/tasks", taskRoutes);
 
 const port = Number(process.env.API_PORT ?? 3001);
+const hostname = process.env.API_HOST ?? "0.0.0.0";
 
-console.log(`API listening on http://localhost:${port}`);
+console.log(`API listening on http://${hostname}:${port}`);
 
 Bun.serve({
+  hostname,
   port,
   fetch: app.fetch,
 });
