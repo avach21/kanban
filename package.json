@@ -15,7 +15,7 @@
     "build:api": "cd apps/api && bun run build",
     "typecheck": "bun run --filter '*' typecheck",
     "db:generate": "cd packages/db && bunx drizzle-kit generate",
-    "db:migrate": "cd packages/db && bunx drizzle-kit migrate",
+    "db:migrate": "bun run --cwd packages/db migrate",
     "db:push": "cd packages/db && bunx drizzle-kit push",
     "e2e:install": "playwright install chromium",
     "e2e:setup": "cd packages/db && export DATABASE_URL=\"postgres://postgres:postgres@localhost:5432/kanban_test\" && bun scripts/ensure-e2e-db.ts && bun run migrate",
