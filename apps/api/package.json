@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kanban/db": "workspace:*",
-    "@kanban/types": "workspace:*",
+    "@kanban/db": "0.0.1",
+    "@kanban/types": "0.0.1",
     "better-auth": "latest",
     "drizzle-orm": "latest",
     "hono": "latest"

@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-kanban}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-kanban}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      API_PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL must be set}
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN must be set}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET must be set}
+      DOG_API_BASE_URL: ${DOG_API_BASE_URL:-https://api.thedogapi.com/v1}
+      DB_MIGRATE_MAX_ATTEMPTS: ${DB_MIGRATE_MAX_ATTEMPTS:-60}
+    expose:
+      - "3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:?VITE_API_URL must be set}
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+
+volumes:
+  postgres_data:
