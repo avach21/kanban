@@ -18,6 +18,8 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
+    networks:
+      - backend
 
   api:
     build:
@@ -37,6 +39,8 @@ services:
       DB_MIGRATE_MAX_ATTEMPTS: ${DB_MIGRATE_MAX_ATTEMPTS:-60}
     expose:
       - "3001"
+    networks:
+      - backend
 
   web:
     build:
@@ -52,3 +56,6 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  backend:
